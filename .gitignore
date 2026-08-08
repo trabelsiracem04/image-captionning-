@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+venv/
+
+# Dataset (captions.txt + splits + images)
+data/
+
+# Training artifacts
+checkpoints/
+outputs/
+experiments/attention_maps/
+experiments/captions/
+experiments/runs/
+
+# Local environment
+.env
+*.local
