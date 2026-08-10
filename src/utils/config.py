@@ -38,10 +38,12 @@ DEFAULTS = {
 "data": {
             "caption_max_len": 30,
             "image_size": 224,
+            "min_freq": 1,
             "train_size": 29783,
             "val_size": 1000,
             "test_size": 1000,
             "split_seed": 42,
+            "num_workers": 2,
         },
     "model": {
         "encoder": "resnet50",
@@ -53,10 +55,12 @@ DEFAULTS = {
     },
     "training": {
         "batch_size": 32,
+        "epochs": 10,
         "lr_decoder": 0.001,
         "lr_cnn": 0.00001,
         "grad_clip": 5.0,
         "fine_tune": False,
+        "patience": 3,
     },
     "inference": {"max_length": 30, "beam_size": 3},
 }

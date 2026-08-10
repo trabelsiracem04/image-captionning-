@@ -68,8 +68,8 @@ def test_unfreeze_layer4_only():
     enc.unfreeze_layer4()
     assert enc.fine_tune is True
     trainable = [(n) for n, p in enc.backbone.named_parameters() if p.requires_grad]
-    assert any(n.startswith("4.") for n in trainable)
-    assert all(n.startswith("4.") for n in trainable)
+    assert any(n.startswith("layer4.") for n in trainable)
+    assert all(n.startswith("layer4.") for n in trainable)
 
 
 def test_unsupported_encoder_raises():

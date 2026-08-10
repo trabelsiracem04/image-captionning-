@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torchvision.models as tv
+from collections import OrderedDict
 
 SUPPORTED_ENCODERS = ("resnet50",)
 
@@ -14,14 +15,18 @@ class ResNetEncoder(nn.Module):
         weights = tv.ResNet50_Weights.IMAGENET1K_V2 if pretrained else None
         self.cnn = tv.resnet50(weights=weights)
         self.backbone = nn.Sequential(
-            self.cnn.conv1,
-            self.cnn.bn1,
-            self.cnn.relu,
-            self.cnn.maxpool,
-            self.cnn.layer1,
-            self.cnn.layer2,
-            self.cnn.layer3,
-            self.cnn.layer4,
+            OrderedDict(
+                [
+                    ("conv1", self.cnn.conv1),
+                    ("bn1", self.cnn.bn1),
+                    ("relu", self.cnn.relu),
+                    ("maxpool", self.cnn.maxpool),
+                    ("layer1", self.cnn.layer1),
+                    ("layer2", self.cnn.layer2),
+                    ("layer3", self.cnn.layer3),
+                    ("layer4", self.cnn.layer4),
+                ]
+            )
         )
         self.cnn = None
 
@@ -54,7 +59,7 @@ class ResNetEncoder(nn.Module):
 
     def unfreeze_layer4(self):
         for name, param in self.backbone.named_parameters():
-            param.requires_grad = name.startswith("4.")
+            param.requires_grad = "layer4." in name
         self.fine_tune = True
 
 
