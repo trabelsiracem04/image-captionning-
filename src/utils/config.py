@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -98,6 +99,30 @@ def load_config(path: str | None = None) -> SimpleNamespace:
 
 def to_dict(cfg: SimpleNamespace) -> dict:
     return _deep_dict(cfg)
+
+
+def apply_env_overrides(cfg: SimpleNamespace) -> SimpleNamespace:
+    """Override config paths from environment (used on Kaggle). No-op when unset."""
+    overrides = {
+        "IMG_CAP_DATA_ROOT": ("paths", "data_root"),
+        "IMG_CAP_CHECKPOINTS_DIR": ("paths", "checkpoints_dir"),
+        "IMG_CAP_OUTPUT_DIR": ("paths", "output_dir"),
+        "IMG_CAP_NUM_WORKERS": ("data", "num_workers"),
+    }
+    for var, (section, key) in overrides.items():
+        value = os.environ.get(var)
+        if value is None:
+            continue
+        section_obj = getattr(cfg, section, None)
+        if section_obj is None:
+            continue
+        if var == "IMG_CAP_NUM_WORKERS":
+            try:
+                value = int(value)
+            except ValueError:
+                raise ValueError(f"{var} must be an integer, got {value!r}")
+        setattr(section_obj, key, value)
+    return cfg
 
 
 if __name__ == "__main__":

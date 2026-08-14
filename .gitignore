@@ -19,7 +19,11 @@ outputs/
 experiments/attention_maps/
 experiments/captions/
 experiments/runs/
+experiments/smoke_ckpt/
 
 # Local environment
 .env
 *.local
+
+# Build artifacts
+dist/

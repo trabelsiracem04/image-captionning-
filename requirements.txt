@@ -5,8 +5,5 @@ torchvision==0.26.0+cu130
 
 numpy>=1.26
 Pillow>=10
-nltk>=3.8
 PyYAML>=6.0
-matplotlib>=3.8
-tqdm>=4.66
 pytest>=8.0

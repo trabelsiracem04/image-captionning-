@@ -9,7 +9,7 @@ from src.data.tokenizer import tokenize
 from src.data.vocabulary import Vocabulary
 from src.models.caption_model import build_caption_model
 from src.training.trainer import Trainer
-from src.utils.config import PROJECT_ROOT, load_config
+from src.utils.config import PROJECT_ROOT, apply_env_overrides, load_config
 from src.utils.device import describe_device, get_device
 from src.utils.logging import make_logger
 from src.utils.seeds import set_all_seeds
@@ -79,6 +79,7 @@ def parse_args(argv=None):
 def main(argv=None):
     args = parse_args(argv)
     cfg = load_config(args.config)
+    apply_env_overrides(cfg)
     set_all_seeds(cfg.seed)
 
     if args.epochs is not None:

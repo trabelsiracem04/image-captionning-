@@ -1,0 +1,7 @@
+# Kaggle Notebook requirements.
+# torch/torchvision come PREINSTALLED on Kaggle (CUDA 12.x builds).
+# Do NOT install torch here - reinstalling it can break the session GPU stack.
+# numpy, Pillow and PyYAML are also preinstalled; pins kept loose as a safety net.
+numpy>=1.26
+Pillow>=10
+PyYAML>=6.0

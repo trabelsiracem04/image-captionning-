@@ -116,3 +116,20 @@ def test_dataset_skips_missing_image(tmp_path, vocab):
     os.remove(data_root / "Images" / "img2.jpg")
     ds = ImageCaptioningDataset("train", cfg, vocab)
     assert len(ds) == 10
+
+
+def test_dataset_image_ids_slice(tmp_path, vocab):
+    cfg, _ = make_cfg(tmp_path)
+    ds = ImageCaptioningDataset("train", cfg, vocab, image_ids=["img1.jpg", "img2.jpg"])
+    assert len(ds) == 10
+    ids = {ds[i]["image_id"] for i in range(len(ds))}
+    assert ids == {"img1.jpg", "img2.jpg"}
+    assert set(ds.image_ids) == {"img1.jpg", "img2.jpg"} or ds.image_ids == ["img1.jpg", "img2.jpg"]
+
+
+def test_dataset_slice_with_missing_image(tmp_path, vocab):
+    cfg, data_root = make_cfg(tmp_path)
+    os.remove(data_root / "Images" / "img3.jpg")
+    ds = ImageCaptioningDataset("train", cfg, vocab, image_ids=["img1.jpg", "img3.jpg"])
+    assert len(ds) == 5
+    assert all(ds[i]["image_id"] == "img1.jpg" for i in range(len(ds)))
