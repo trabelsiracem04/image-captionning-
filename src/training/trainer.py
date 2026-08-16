@@ -3,7 +3,7 @@ import time
 import torch
 import torch.nn.utils as nn_utils
 
-from src.training.losses import captioning_loss
+from src.training.losses import captioning_loss, doubly_stochastic_reg
 from src.training.validate import validate_captions
 from src.utils.checkpoints import checkpoint_paths, save_checkpoint, load_checkpoint
 
@@ -57,8 +57,10 @@ class Trainer:
             images = batch["images"].to(self.device)
             labels = batch["caption_ids"].to(self.device)
 
-            logits, _, _ = self.model(images, labels)
-            loss = captioning_loss(logits, labels, pad_id=self.vocab.PAD)
+            logits, weights, _ = self.model(images, labels)
+            ce = captioning_loss(logits, labels, pad_id=self.vocab.PAD)
+            reg = doubly_stochastic_reg(weights, labels, pad_id=self.vocab.PAD)
+            loss = ce + getattr(self.cfg.training, "attention_reg", 1.0) * reg
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -90,7 +92,6 @@ class Trainer:
         getattr(self.logger, level)(message)
 
     def train(self, epochs):
-        no_improve = 0
         epoch = self.start_epoch - 1
         for epoch in range(self.start_epoch, self.start_epoch + epochs):
             loss, seconds = self.train_epoch()
@@ -103,9 +104,6 @@ class Trainer:
                 improved = bleu1 > self.best_bleu1
                 if improved:
                     self.best_bleu1 = bleu1
-                    no_improve = 0
-                else:
-                    no_improve += 1
                 line += (
                     f"  |  val BLEU-1 {bleu1:.4f}  BLEU-4 {metrics[4]:.4f}"
                     f"  {'(best)' if improved else ''}"
@@ -119,13 +117,6 @@ class Trainer:
                 self._save_last(epoch)
                 if improved:
                     self._save_best(epoch, self.best_bleu1)
-
-            if self.val_loader is not None and no_improve >= self.patience:
-                self.early_stopped = True
-                self._log(
-                    f"early stopping: no val BLEU-1 improvement for {self.patience} epochs"
-                )
-                break
 
         self.final_epoch = epoch
         return self.best_bleu1

@@ -34,3 +34,21 @@ def captioning_loss(logits, labels, pad_id=0):
         shifted_logits[valid],
         shifted_labels[valid],
     )
+
+
+def doubly_stochastic_reg(weights, labels, pad_id=0):
+    """Doubly-stochastic attention regularization (Xu et al., 2015).
+
+    Encourages, for each image region i, the sum of attention weights over all
+    decoding timesteps to be ~1:  lambda * sum_i (1 - sum_t alpha_{t,i})^2.
+
+    Args:
+        weights: [B, T, N] full attention-weight sequence (softmax over regions).
+        labels:  [B, T] token ids (<SOS> ... <EOS>, PAD-padded).
+        pad_id:  token id whose timesteps are excluded from the time-sum.
+    """
+    attn_mask = (labels[:, 1:] != pad_id).float()      # [B, T-1]
+    w = weights[:, : attn_mask.shape[1]]               # drop col predicting past <EOS>
+    w = w * attn_mask.unsqueeze(-1)                    # zero padded timesteps
+    col_sum = w.sum(dim=1)                             # [B, N], sum over time per region
+    return (1.0 - col_sum).pow(2).sum(dim=1).mean()    # mean over batch, sum over regions

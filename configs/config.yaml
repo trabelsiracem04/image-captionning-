@@ -35,7 +35,7 @@ training:
   lr_cnn: 0.00001
   grad_clip: 5.0
   fine_tune: false
-  patience: 3
+  attention_reg: 1.0
 
 inference:
   max_length: 30

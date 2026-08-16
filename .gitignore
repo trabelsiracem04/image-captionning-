@@ -24,6 +24,7 @@ experiments/smoke_ckpt/
 # Local environment
 .env
 *.local
+kaggle.json
 
 # Build artifacts
 dist/
