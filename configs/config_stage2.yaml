@@ -1,0 +1,42 @@
+seed: 42
+device: auto
+
+paths:
+  data_root: data
+  images_dir: Images
+  captions_file: captions.txt
+  splits_dir: splits
+  split_manifest: split_manifest.json
+  checkpoints_dir: checkpoints
+  output_dir: outputs
+
+data:
+  caption_max_len: 30
+  image_size: 224
+  min_freq: 1
+  num_workers: 2
+  train_size: 29783
+  val_size: 1000
+  test_size: 1000
+  split_seed: 42
+
+model:
+  encoder: resnet50
+  encoder_pretrained: true
+  embed_dim: 256
+  hidden_dim: 512
+  attention_dim: 512
+  dropout: 0.5
+
+training:
+  batch_size: 32
+  epochs: 10
+  lr_decoder: 0.0001
+  lr_cnn: 0.00001
+  grad_clip: 5.0
+  fine_tune: true
+  attention_reg: 1.0
+
+inference:
+  max_length: 30
+  beam_size: 3

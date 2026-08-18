@@ -33,13 +33,46 @@ class Trainer:
         self.checkpoints_dir = checkpoints_dir
         self.logger = logger
 
-        self.model.encoder.eval()  # frozen backbone, BN stays frozen during stage 1
-        self.optimizer = torch.optim.AdamW(
-            self.model.decoder.parameters(), lr=cfg.training.lr_decoder
-        )
+        if self.cfg.training.fine_tune:
+            self.model.encoder.train()
+        else:
+            self.model.encoder.eval()
+
+        param_groups = [
+            {
+                "params": self.model.decoder.parameters(),
+                "lr": self.cfg.training.lr_decoder,
+            }
+        ]
+        if self.cfg.training.fine_tune:
+            encoder_params = [
+                p for p in self.model.encoder.parameters() if p.requires_grad
+            ]
+            param_groups.append(
+                {"params": encoder_params, "lr": self.cfg.training.lr_cnn}
+            )
+        self.optimizer = torch.optim.AdamW(param_groups)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer, mode="max", factor=0.5, patience=2
         )
+
+        if self.cfg.training.fine_tune:
+            trainable_enc = [p for p in self.model.encoder.parameters() if p.requires_grad]
+            assert trainable_enc, "FINE-TUNE requested but encoder has no trainable params"
+            assert len(self.optimizer.param_groups) == 2, (
+                "FINE-TUNE requested but optimizer is not two-group"
+            )
+            enc_in_opt = any(
+                p in set(self.optimizer.param_groups[1]["params"]) for p in trainable_enc
+            )
+            assert enc_in_opt, "FINE-TUNE requested but encoder params not in optimizer"
+            self._log(
+                "FINE-TUNE ACTIVE: %d encoder params trainable | encoder mode=%s"
+                % (
+                    len(trainable_enc),
+                    "train" if self.model.encoder.training else "eval",
+                )
+            )
 
         self.best_bleu1 = -float("inf")
         self.start_epoch = 0
@@ -49,7 +82,10 @@ class Trainer:
 
     def train_epoch(self):
         self.model.train()
-        self.model.encoder.eval()
+        if self.cfg.training.fine_tune:
+            self.model.encoder.train()
+        else:
+            self.model.encoder.eval()
 
         total_loss, n_batches = 0.0, 0
         t_start = time.time()
@@ -65,7 +101,7 @@ class Trainer:
             self.optimizer.zero_grad()
             loss.backward()
             nn_utils.clip_grad_norm_(
-                self.model.decoder.parameters(), self.cfg.training.grad_clip
+                self.model.parameters(), self.cfg.training.grad_clip
             )
             self.optimizer.step()
 
@@ -144,10 +180,11 @@ class Trainer:
         )
 
     def resume(self, checkpoint_path):
+        load_optimizer = not self.cfg.training.fine_tune
         info = load_checkpoint(
             checkpoint_path,
             self.model,
-            optimizer=self.optimizer,
+            optimizer=self.optimizer if load_optimizer else None,
             device=self.device,
         )
         self.start_epoch = info["epoch"] + 1

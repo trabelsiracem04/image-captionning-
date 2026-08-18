@@ -67,12 +67,13 @@ def build_loaders(cfg, vocab):
 
 
 def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description="Stage-1 training (CNN frozen)")
+    parser = argparse.ArgumentParser(description="Image captioning training (Stage 1 or Stage 2)")
     parser.add_argument("--config", default=None, help="path to config yaml")
     parser.add_argument("--epochs", type=int, default=None, help="override training.epochs")
     parser.add_argument("--tag", default=None, help="run name for the logs/checkpoints folder")
     parser.add_argument("--resume", default=None, help="checkpoint .pt to resume from")
     parser.add_argument("--checkpoints-dir", default=None, help="override checkpoints dir")
+    parser.add_argument("--fine-tune", action="store_true", help="force CNN fine-tuning (Stage 2)")
     return parser.parse_args(argv)
 
 
@@ -86,6 +87,8 @@ def main(argv=None):
         cfg.training.epochs = args.epochs
     if args.checkpoints_dir is not None:
         cfg.paths.checkpoints_dir = args.checkpoints_dir
+    if args.fine_tune:
+        cfg.training.fine_tune = True
 
     device = get_device(cfg.device)
     log_dir = (PROJECT_ROOT / "experiments" / "runs" / args.tag) if args.tag else None
@@ -122,7 +125,8 @@ def main(argv=None):
     if args.resume:
         trainer.resume(args.resume)
 
-    logger.info("training stage-1 for %s epochs (patience=%s)...", cfg.training.epochs, trainer.patience)
+    stage = 2 if cfg.training.fine_tune else 1
+    logger.info("training stage-%s for %s epochs...", stage, cfg.training.epochs)
     best = trainer.train(cfg.training.epochs)
     logger.info("done. best val BLEU-1=%.4f%s", best, " (early stopped)" if trainer.early_stopped else "")
     return best

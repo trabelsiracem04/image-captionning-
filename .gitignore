@@ -20,6 +20,7 @@ experiments/attention_maps/
 experiments/captions/
 experiments/runs/
 experiments/smoke_ckpt/
+kaggle_output/
 
 # Local environment
 .env
