@@ -133,8 +133,13 @@ Xavier uniform initialization on all attention layers.
 
 ### Two-stage training
 
-1. **Stage 1** — Encoder frozen, train decoder + attention only
-2. **Stage 2** — Unfreeze layer4, lower LR for encoder
+**Stage 1** — Encoder frozen, train decoder + attention only
+- LR: 1e-3 (decoder), epochs: 10
+- Best val BLEU-1: 0.6050
+
+**Stage 2** — Unfreeze layer4, lower LR for encoder
+- LR: 1e-4 (decoder), 1e-5 (encoder), epochs: 10
+- Best val BLEU-1: 0.6143
 
 ## Quickstart (Local)
 
@@ -173,3 +178,16 @@ See [`kaggle/README.md`](kaggle/README.md) for full instructions.
 
 - **97/97** unit tests passing (`pytest tests/ -q`)
 - **GPU smoke gate**: 100 images, 2 epochs, loss decreasing, BLEU improving
+
+## Results
+
+Test set metrics on Flickr30k (1,000 images):
+
+| Metric | Stage 1 | Stage 2 |
+|---|---|---|
+| BLEU-1 | 0.6166 | **0.6227** |
+| BLEU-2 | 0.3160 | **0.3292** |
+| BLEU-3 | 0.1490 | **0.1640** |
+| BLEU-4 | 0.0727 | **0.0849** |
+
+Stage 2 (fine-tuned encoder) improves over Stage 1 across all BLEU metrics.
